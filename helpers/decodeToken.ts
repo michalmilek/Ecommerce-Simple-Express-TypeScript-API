@@ -10,7 +10,7 @@ export function getTokenFromRequest(req: Request): JwtPayload | null {
 	}
 
 	try {
-		const decoded = jwt.verify(token, "your-secret-key");
+		const decoded = jwt.verify(token, process.env.SECRET_KEY as string);
 		return decoded as JwtPayload;
 	} catch (error) {
 		return null;

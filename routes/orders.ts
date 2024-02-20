@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { getTokenFromRequest } from "../helpers/decodeToken";
 import Product from "../models/Product";
 import Order from "../models/order";
 import OrderItem from "../models/order-item";
@@ -22,6 +23,32 @@ router.get("/", async (req, res) => {
 		}
 
 		return res.send(orders);
+	} catch (error) {
+		return res.status(500).json({ success: false, error });
+	}
+});
+
+router.get("/user", async (req, res) => {
+	try {
+		const token = getTokenFromRequest(req);
+
+		if (!token) {
+			return res.status(400).send("Invalid token");
+		}
+
+		const { userId } = token;
+
+		const userOrderList = await Order.find({ user: userId })
+			.populate("orderItems", "product quantity")
+			.sort({
+				dateOrdered: -1,
+			});
+
+		if (!userOrderList) {
+			return res.status(500).json({ success: false });
+		}
+
+		return res.send(userOrderList);
 	} catch (error) {
 		return res.status(500).json({ success: false, error });
 	}

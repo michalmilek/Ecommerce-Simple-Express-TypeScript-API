@@ -8,14 +8,15 @@ function authJwt() {
 		throw new Error("FATAL ERROR: jwtPrivateKey is not defined.");
 	}
 
-	console.log(secret);
-
 	return expressjwt({
 		secret: secret,
 		algorithms: ["HS256"],
 		// isRevoked: isRevoked as unknown as IsRevoked,
 	}).unless({
 		path: [
+			{ url: /\/public\/uploads(.*)/, methods: ["GET", "OPTIONS"] },
+			{ url: /\/api\/products(.*)/, methods: ["GET", "OPTIONS"] },
+			{ url: /\/api\/categories(.*)/, methods: ["GET", "OPTIONS"] },
 			"/api/users/login",
 			"/api/users/register",
 			"/api/users/refresh-token",
