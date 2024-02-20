@@ -3,8 +3,12 @@ import "dotenv/config";
 import express from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
+import { errorHandler } from "./helpers/error-handler";
+import authJwt from "./helpers/jwt";
 import categoriesRouter from "./routes/categories";
+import ordersRouter from "./routes/orders";
 import productsRouter from "./routes/products";
+import usersRouter from "./routes/users";
 
 const app = express();
 
@@ -12,6 +16,8 @@ app.use(cors());
 app.options("*", cors());
 app.use(express.json());
 app.use(morgan("tiny"));
+app.use(authJwt());
+app.use(errorHandler);
 
 mongoose.connect(process.env.MONGO_URI as string).then(() => {
 	console.log("Connected to MongoDB");
@@ -19,6 +25,8 @@ mongoose.connect(process.env.MONGO_URI as string).then(() => {
 
 app.use("/api/categories", categoriesRouter);
 app.use("/api/products", productsRouter);
+app.use("/api/users", usersRouter);
+app.use("/api/orders", ordersRouter);
 
 app.listen(process.env.SERVER_PORT || 6000, () => {
 	console.log(`Server is running on port ${process.env.SERVER_PORT || 6000}`);
