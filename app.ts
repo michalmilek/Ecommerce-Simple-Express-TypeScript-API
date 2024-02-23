@@ -4,7 +4,6 @@ import express from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
 import { errorHandler } from "./helpers/error-handler";
-import authJwt from "./helpers/jwt";
 import categoriesRouter from "./routes/categories";
 import ordersRouter from "./routes/orders";
 import productsRouter from "./routes/products";
@@ -16,7 +15,7 @@ app.use(cors());
 app.options("*", cors());
 app.use(express.json());
 app.use(morgan("tiny"));
-app.use(authJwt());
+// app.use(authJwt());
 app.use("/public/uploads", express.static(__dirname + "/public/uploads"));
 app.use(errorHandler);
 
