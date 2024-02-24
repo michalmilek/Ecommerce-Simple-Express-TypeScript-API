@@ -1,6 +1,8 @@
 import { Request, Router } from "express";
+import fs from "fs";
 import mongoose from "mongoose";
 import multer from "multer";
+import path from "path";
 import Product from "../models/Product";
 import Category from "../models/category";
 
@@ -13,6 +15,15 @@ interface ReqFiles extends Request {
 		[key: string]: Express.Multer.File[];
 	};
 }
+
+// interface ReqEditFiles extends Request {
+// 	image: string;
+// 	images: string[];
+// 	files: {
+// 		[key: string]: Express.Multer.File[];
+// 	};
+// 	}
+
 interface FileType {
 	filename: string;
 	image: File[];
@@ -101,8 +112,6 @@ router.post(
 						file.filename
 					}`;
 				});
-			} else {
-				return res.status(400).send("Invalid images");
 			}
 
 			const product = new Product({
@@ -143,42 +152,146 @@ router.get(`/:id`, async (req, res) => {
 	}
 });
 
-router.patch("/:id", uploadOptions.single("image"), async (req, res) => {
-	try {
-		if (mongoose.isValidObjectId(req.params.id) === false)
-			return res.status(400).send("Invalid Product ID");
+router.put(
+	"/:id",
+	uploadOptions.fields([
+		{
+			name: "image",
+			maxCount: 1,
+		},
+		{
+			name: "images",
+			maxCount: 10,
+		},
+	]),
+	async (req, res) => {
+		try {
+			if (mongoose.isValidObjectId(req.params.id) === false)
+				return res.status(400).send("Invalid Product ID");
 
-		const product = await Product.findById(req.params.id);
+			console.log("req", req);
+			console.log("req.files", req.files);
 
-		if (!product) return res.status(400).send("Invalid Product ID");
+			const product = await Product.findById(req.params.id);
 
-		if (req.body.category) {
-			const category = await Category.findById(req.body.category);
-			if (!category) return res.status(400).send("Invalid Category");
+			if (!product) return res.status(400).send("Invalid Product ID");
+
+			if (req.body.category) {
+				const category = await Category.findById(req.body.category);
+				if (!category) return res.status(400).send("Invalid Category");
+			}
+
+			if (!req.files) {
+				console.log("no files");
+				const updatedProduct = await product.updateOne({
+					...req.body,
+				});
+
+				if (!updatedProduct)
+					return res.status(400).send("The product cannot be updated!");
+
+				return res.send(updatedProduct);
+			}
+
+			if (Object.keys(req.files).length === 0) {
+				const imagesToDelete = product.images.filter(
+					image => !req.body.images.includes(image)
+				);
+				console.log("🚀 ~ imagesToDelete:", imagesToDelete);
+
+				const updatedProduct = await product.updateOne({
+					...req.body,
+				});
+
+				if (!updatedProduct)
+					return res.status(400).send("The product cannot be updated!");
+
+				imagesToDelete.forEach(image => {
+					const parts = image.split("uploads/");
+					const result = parts.pop();
+					if (!result) return console.log("Error while deleting image.");
+					const folderPath = path.join(__dirname, "..", "public", "uploads");
+					const filePath = path.join(folderPath, result);
+
+					fs.unlink(filePath, err => {
+						if (err) {
+							console.error("Error while deleting img", err);
+							return;
+						}
+						console.log("File removed.");
+					});
+				});
+
+				return res.send(updatedProduct);
+			}
+
+			const imageFiles = (req as ReqFiles).files?.image;
+			let imagesFiles = (req as ReqFiles).files?.images;
+
+			const imageBasePath =
+				imageFiles && imageFiles.length > 0
+					? `${req.protocol}://${req.get("host")}/public/uploads/${
+							imageFiles[0]!.filename
+					  }`
+					: (product.image as string);
+			let imagesBasePaths: string[] = [];
+
+			if (!imagesFiles || !imagesFiles.length) {
+				imagesFiles = [];
+				imagesBasePaths = product.images as string[];
+			} else if (imagesFiles.length > 0) {
+				const newImages = req.body.images ? req.body.images : [];
+
+				imagesBasePaths = [
+					...imagesFiles.map(file => {
+						return `${req.protocol}://${req.get("host")}/public/uploads/${
+							file.filename
+						}`;
+					}),
+					...newImages,
+				];
+			}
+
+			const updatedProduct = await product.updateOne({
+				...req.body,
+				image: imageBasePath,
+				images: imagesBasePaths,
+			});
+
+			if (!updatedProduct)
+				return res.status(400).send("The product cannot be updated!");
+
+			console.log("productImages", product.images);
+			console.log("imagesBasePaths", imagesBasePaths);
+
+			const imagesToDelete = product.images.filter(
+				image => !imagesBasePaths.includes(image)
+			);
+			console.log("🚀 ~ imagesToDelete:", imagesToDelete);
+
+			imagesToDelete.forEach(image => {
+				const parts = image.split("uploads/");
+				const result = parts.pop();
+				if (!result) return console.log("Error while deleting image.");
+				const folderPath = path.join(__dirname, "..", "public", "uploads");
+				const filePath = path.join(folderPath, result);
+
+				fs.unlink(filePath, err => {
+					if (err) {
+						console.error("Error while deleting img", err);
+						return;
+					}
+					console.log("File removed.");
+				});
+			});
+
+			return res.send(updatedProduct);
+		} catch (error) {
+			console.log(error);
+			return res.status(500).json({ success: false, error });
 		}
-
-		const { file } = req;
-		let imagePath: string = "";
-
-		if (file) {
-			const fileName = file.filename;
-			const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
-			imagePath = `${basePath}${fileName}`;
-		} else {
-			imagePath = product.image as string;
-		}
-
-		const updatedProduct = await product.updateOne({
-			...req.body,
-			image: imagePath,
-		});
-
-		if (!updatedProduct)
-			return res.status(400).send("The product cannot be updated!");
-	} catch (error) {
-		return res.status(500).json({ success: false, error });
 	}
-});
+);
 
 router.delete("/:id", async (req, res) => {
 	try {
