@@ -23,6 +23,28 @@ declare module "jsonwebtoken" {
 
 const router: Router = Router();
 
+router.get("/", async (req, res) => {
+	try {
+		const userList = await User.find().select("-password");
+
+		if (!userList) return res.status(400).send("No users found");
+
+		return res.send(userList);
+	} catch (error) {
+		return res.status(500).json({ success: false, error });
+	}
+});
+
+router.get("/:id", async (req, res) => {
+	try {
+		const user = await User.findById(req.params.id).select("-password");
+		if (!user) return res.status(400).send("No user found");
+		return res.send(user);
+	} catch (error) {
+		return res.status(500).json({ success: false, error });
+	}
+});
+
 router.post("/register", async (req, res) => {
 	try {
 		if (req.body === null) return res.status(400).send("Invalid User Data");

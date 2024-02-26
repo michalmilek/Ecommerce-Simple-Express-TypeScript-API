@@ -15,6 +15,10 @@ const router: Router = Router();
 router.get("/", async (req, res) => {
 	try {
 		const orders = await Order.find()
+			.populate({
+				path: "orderItems",
+				populate: { path: "product", select: "name price" },
+			})
 			.populate("user", "name")
 			.sort({ dateOrdered: -1 });
 
@@ -57,11 +61,11 @@ router.get("/user", async (req, res) => {
 router.get("/:id", async (req, res) => {
 	try {
 		const order = await Order.findById(req.params.id)
-			.populate("user", "name")
 			.populate({
 				path: "orderItems",
-				populate: { path: "product", select: "name" },
-			});
+				populate: { path: "product", select: "name price" },
+			})
+			.populate("user", "name");
 
 		if (!order) {
 			return res.status(500).json({ success: false });
@@ -191,6 +195,26 @@ router.delete("/:id", async (req, res) => {
 			.status(200)
 			.json({ success: true, message: "Order deleted successfully" });
 	} catch (error) {}
+});
+
+router.patch("/:id/change-status", async (req, res) => {
+	try {
+		const order = await Order.findByIdAndUpdate(
+			req.params.id,
+			{
+				status: req.body.status,
+			},
+			{ new: true }
+		);
+
+		if (!order) {
+			return res.status(500).send("The order cannot be updated");
+		}
+
+		return res.send(order);
+	} catch (error) {
+		return res.status(500).json({ success: false, error });
+	}
 });
 
 export default router;
