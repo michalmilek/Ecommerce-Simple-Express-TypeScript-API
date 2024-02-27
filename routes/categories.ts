@@ -103,4 +103,18 @@ router.get(`/get/featured/:count`, async (req: Request, res: Response) => {
 	}
 });
 
+
+router.get('/get/count', async (req: Request, res: Response) => {
+	try {
+		const categoryCount = await Category.countDocuments();
+
+		if (!categoryCount) {
+			return res.status(500).json({ success: false });
+		}
+		return res.status(200).json({ categoryCount });
+	} catch (error) {
+		return res.status(500).json({ success: false, error });
+	}
+});
+
 export default router;

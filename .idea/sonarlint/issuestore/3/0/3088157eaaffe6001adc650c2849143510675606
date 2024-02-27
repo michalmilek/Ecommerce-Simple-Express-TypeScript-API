@@ -1,0 +1,15 @@
+
+:typescript:S125"Remove this commented out code.(ß³ÚË
+htypescript:S6544="GPromise returned in function argument where a void return was expected.(¢‡Ôõùÿÿÿÿ
+btypescript:S6544U"GPromise returned in function argument where a void return was expected.(År
+wtypescript:S6582j"[Prefer using an optional chain expression instead, as it's more concise and easier to read.(ªçÜÿ
+Utypescript:S1854k"9Remove this useless assignment to variable "imagesFiles".(ñ¼¨•
+dtypescript:S6544Œ"GPromise returned in function argument where a void return was expected.(ÎçÌï
+ctypescript:S6544§"GPromise returned in function argument where a void return was expected.(År
+ptypescript:S3776§"TRefactor this function to reduce its Cognitive Complexity from 32 to the 15 allowed.(År
+otypescript:S4325ì"RThis assertion is unnecessary since it does not change the type of the expression.(”˜ÁŞ
+xtypescript:S6582ï"[Prefer using an optional chain expression instead, as it's more concise and easier to read.(ªçÜÿ
+Vtypescript:S1854ğ"9Remove this useless assignment to variable "imagesFiles".(ñ¼¨•
+itypescript:S6544¨"GPromise returned in function argument where a void return was expected.(½ÏöÚüÿÿÿÿ
+itypescript:S6544·"GPromise returned in function argument where a void return was expected.(’ÖùÑúÿÿÿÿ
+ctypescript:S6544Æ"GPromise returned in function argument where a void return was expected.(År

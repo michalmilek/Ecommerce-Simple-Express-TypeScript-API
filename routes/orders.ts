@@ -217,4 +217,17 @@ router.patch("/:id/change-status", async (req, res) => {
 	}
 });
 
+
+router.get('/get/count', async (req, res) => {
+	const orderCount = await Order.countDocuments();
+
+	if (!orderCount) {
+		return res.status(500).json({ success: false });
+	}
+
+	return res.send({
+		orderCount,
+	});
+});
+
 export default router;

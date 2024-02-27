@@ -118,6 +118,45 @@ router.post("/login", async (req, res) => {
 	}
 });
 
+
+router.post('/admin/login', async (req, res) => {
+	try {
+		if (!req.body.email || !req.body.password)
+			return res.status(400).send("Invalid User Data");
+
+		const {email, password } = req.body;
+
+		const user = await User.findOne({ email});
+
+		if (!user) return res.status(400).send("The user not found");
+
+		if(user.isAdmin === false) return res.status(400).send("The user is not an admin");
+
+		if (user && bcrypt.compareSync(password, user.password)) {
+			const accessToken = jwt.sign(
+				{ userId: user.id, isAdmin: user.isAdmin },
+				process.env.SECRET_KEY as string,
+				{
+					expiresIn: "5h",
+				}
+			);
+
+			const refreshToken = jwt.sign(
+				{ userId: user.id, isAdmin: user.isAdmin },
+				process.env.REFRESH_KEY as string,
+				{
+					expiresIn: "7d",
+				}
+			);
+
+			return res.send({ user: user.email, accessToken, refreshToken });
+		} else {
+			return res.status(400).send("The password is wrong");
+		}
+	} catch (error) {
+		return res.status(500).json({ success: false, error });
+	}});
+
 router.post("/refresh-token", async (req, res) => {
 	try {
 		const { accessToken, refreshToken } = req.body;
@@ -191,14 +230,16 @@ router.patch("/:id", async (req, res) => {
 
 router.get("/get/count", async (req, res) => {
 	try {
-		const userCount = await User.countDocuments((count: number) => count);
+		const userCount = await User.countDocuments();
 
 		if (!userCount) return res.status(400).send("No users found");
 
 		return res.send({ userCount });
 	} catch (error) {
+		console.log(error);
 		return res.status(500).json({ success: false, error });
 	}
 });
+
 
 export default router;
